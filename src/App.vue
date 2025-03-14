@@ -4,11 +4,14 @@ import axios from "axios"
 
 const news = ref([]);
 
-const page = {
-  top: 0, new: 0, best: 0, show: 0, ask: 0, jobs: 0,
-};
 const storiesID = {
-  top: [], new: [], best: [], show: [], ask: [], jobs: [],
+  top: [], new: [], best: [], show: [], ask: [], job: []
+};
+const page = {
+  top: 0, new: 0, best: 0, show: 0, ask: 0, job: 0,
+};
+const activeStory = {
+  top: true, new: false, best: false, show: false, ask: false, job: false,
 };
 
 
@@ -16,22 +19,22 @@ const storiesID = {
 onMounted(async () => {
   let topStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/topstories.json");
   storiesID.top = splitArray(topStorieIDs.data);
-  fetchTopStories();
+  fetchStories();
 
   let newStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/newstories.json");
-  storiesID.top = splitArray(newStorieIDs.data);
+  storiesID.new = splitArray(newStorieIDs.data);
 
   let bestStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/beststories.json");
-  storiesID.top = splitArray(bestStorieIDs.data);
+  storiesID.best = splitArray(bestStorieIDs.data);
 
   let showStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/showstories.json");
-  storiesID.top = splitArray(showStorieIDs.data);
+  storiesID.show = splitArray(showStorieIDs.data);
 
   let askStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/askstories.json");
-  storiesID.top = splitArray(askStorieIDs.data);
+  storiesID.ask = splitArray(askStorieIDs.data);
 
   let jobStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/jobstories.json");
-  storiesID.top = splitArray(jobStorieIDs.data);
+  storiesID.job = splitArray(jobStorieIDs.data);
 
 })
 
@@ -44,17 +47,84 @@ function splitArray(arr) {
   return result;
 }
 
-// Fetch top stories
-async function fetchTopStories() {
-  storiesID.top[page.top].forEach(async (id) => {
+// Fetch Stories
+async function fetchStories() {
+  const activeName = Object.keys(activeStory).find(key => activeStory[key] == true);
+  news.value = [];
+  storiesID[`${activeName}`][page[`${activeName}`]].forEach(async (id) => {
     news.value.push(await fetchStory(id));
   })
 }
-
 // Fetch inique story form ID
 async function fetchStory(id) {
   const res = await axios.get(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
   return res.data;
+}
+
+// Backward page
+function backPage() {
+  const activeName = Object.keys(activeStory).find(key => activeStory[key] == true);
+  if (storiesID[`${activeName}`][page[`${activeName}`] - 1] == undefined) return;
+  page[`${activeName}`] = page[`${activeName}`] - 1;
+
+  fetchStories();
+}
+
+// Forward page
+function nextPage() {
+  const activeName = Object.keys(activeStory).find(key => activeStory[key] == true);
+  if (storiesID[`${activeName}`][page[`${activeName}`] + 1] == undefined) return;
+  page[`${activeName}`] = page[`${activeName}`] + 1;
+
+  fetchStories();
+}
+
+// Reset Active story and Page number
+function resetStories() {
+  for (let key in page) page[key] = 0;
+  for (let key in activeStory) activeStory[key] = false;
+}
+
+// Fetch Top stories
+function fetchTopStories() {
+  resetStories();
+  activeStory.top = true;
+  fetchStories();
+}
+
+// Fetch New stories
+function fetchNewStories() {
+  resetStories();
+  activeStory.new = true;
+  fetchStories();
+}
+
+// Fetch Best stories
+function fetchBestStories() {
+  resetStories();
+  activeStory.best = true;
+  fetchStories();
+}
+
+// Fetch Show stories
+function fetchShowStories() {
+  resetStories();
+  activeStory.show = true;
+  fetchStories();
+}
+
+// Fetch Ask stories
+function fetchAskStories() {
+  resetStories();
+  activeStory.ask = true;
+  fetchStories();
+}
+
+// Fetch Job stories
+function fetchJobStories() {
+  resetStories();
+  activeStory.job = true;
+  fetchStories();
 }
 
 
@@ -63,14 +133,14 @@ async function fetchStory(id) {
 <template>
   <div class="header">
     <div class="topNews">
-      <p class="leftHeader">Hacker News</p>
+      <p class="leftHeader" @click="fetchTopStories">Hacker News</p>
     </div>
     <div class="subNews">
-      <p>New</p>
-      <p>Best</p>
-      <p>Show</p>
-      <p>Ask</p>
-      <p>Jobs</p>
+      <p @click="fetchNewStories" :class="{ underline: activeStory.new }">New</p>
+      <p @click="fetchBestStories" :class="{ underline: activeStory.best }">Best</p>
+      <p @click="fetchShowStories" :class="{ underline: activeStory.show }">Show</p>
+      <p @click="fetchAskStories" :class="{ underline: activeStory.ask }">Ask</p>
+      <p @click="fetchJobStories" :class="{ underline: activeStory.job }">Jobs</p>
     </div>
   </div>
   <div class="middle">
@@ -85,11 +155,25 @@ async function fetchStory(id) {
         </div>
       </div>
     </div>
+    <div class="footer">
+      <button @click="backPage">back</button>
+      <button @click="nextPage">next</button>
+    </div>
   </div>
 
 </template>
 
 <style scoped>
+.underline {
+  /* text-decoration: underline; */
+  background-color: rgb(214, 147, 60);
+  border-radius: 3px;
+}
+
+.footer button {
+  margin: 5px;
+}
+
 .listItems {
   display: flex;
   flex-direction: column;
@@ -160,14 +244,16 @@ a {
   width: 50%;
   font-size: small;
   color: black;
+  cursor: pointer;
 }
 
 .subNews p {
-  margin: 8px;
+  padding: 1px 12px;
 }
 
 .leftHeader {
   color: black;
   font-weight: bold;
+  cursor: pointer;
 }
 </style>
