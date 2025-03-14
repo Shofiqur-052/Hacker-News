@@ -4,38 +4,57 @@ import axios from "axios"
 
 const news = ref([]);
 
+const page = {
+  top: 0, new: 0, best: 0, show: 0, ask: 0, jobs: 0,
+};
+const storiesID = {
+  top: [], new: [], best: [], show: [], ask: [], jobs: [],
+};
 
-onMounted(() => {
+
+// Fetch Storie's IDs once
+onMounted(async () => {
+  let topStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/topstories.json");
+  storiesID.top = splitArray(topStorieIDs.data);
   fetchTopStories();
+
+  let newStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/newstories.json");
+  storiesID.top = splitArray(newStorieIDs.data);
+
+  let bestStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/beststories.json");
+  storiesID.top = splitArray(bestStorieIDs.data);
+
+  let showStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/showstories.json");
+  storiesID.top = splitArray(showStorieIDs.data);
+
+  let askStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/askstories.json");
+  storiesID.top = splitArray(askStorieIDs.data);
+
+  let jobStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/jobstories.json");
+  storiesID.top = splitArray(jobStorieIDs.data);
+
 })
 
-async function fetchTopStories() {
-  const response = await axios.get("https://hacker-news.firebaseio.com/v0/topstories.json");
-
-  let index = 0;
-  while (index < 20) {
-    const info = {
-      id: "",
-      title: "Loading...",
-      score: "Loading...",
-      author: "Loading...",
-      comments: [],
-      time: "Loading...",
-      url: "",
-    };
-    const res = await axios.get(`https://hacker-news.firebaseio.com/v0/item/${response.data[index]}.json`);
-    info.id = res.data.id;
-    info.title = res.data.title;
-    info.score = res.data.score;
-    info.author = res.data.by;
-    info.comments = res.data.kids;
-    info.time = res.data.time;
-    info.url = res.data.url;
-
-    news.value.push(info);
-    index++;
+// Split IDs into pages of 20 stories per page
+function splitArray(arr) {
+  const result = [];
+  for (let i = 0; i < arr.length; i += 20) {
+    result.push(arr.slice(i, i + 20));
   }
-  console.log(news.value.length);
+  return result;
+}
+
+// Fetch top stories
+async function fetchTopStories() {
+  storiesID.top[page.top].forEach(async (id) => {
+    news.value.push(await fetchStory(id));
+  })
+}
+
+// Fetch inique story form ID
+async function fetchStory(id) {
+  const res = await axios.get(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+  return res.data;
 }
 
 
@@ -60,8 +79,8 @@ async function fetchTopStories() {
         <a class="title" :href="item.url" target="_blank">{{ item.title }}</a>
         <div class="bottomSection">
           <p>{{ item.score }} voets | </p>
-          <p>by {{ item.author }} | </p>
-          <p>{{ item.comments.length }} comments | </p>
+          <p>by {{ item.by }} | </p>
+          <p v-if="item.descendants != 0">{{ item.descendants }} comments | </p>
           <p>{{ item.time }} times ago</p>
         </div>
       </div>
