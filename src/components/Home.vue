@@ -1,48 +1,29 @@
 <script setup>
 import { onMounted, ref } from "vue"
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import axios from "axios"
 
-const news = ref([]);
 const route = useRoute();
+const router = useRouter();
+
+const news = ref([]);
 const param = ref("");
 
-const storiesID = {
-    top: [], new: [], best: [], show: [], ask: [], job: []
-};
-const page = {
-    top: 0, new: 0, best: 0, show: 0, ask: 0, job: 0,
-};
+let storiesID = [];
+let page = 0;
+
 const activeStory = {
     top: true, new: false, best: false, show: false, ask: false, job: false,
 };
-
-console.log("whyyyyyyy");
 
 
 // Fetch Storie's IDs once
 onMounted(async () => {
     param.value = route.params.stories;
 
-    let topStorieIDs = await axios.get(`https://hacker-news.firebaseio.com/v0/${param.value}.json`);
-    storiesID.top = splitArray(topStorieIDs.data);
+    const storieIDs = await axios.get(`https://hacker-news.firebaseio.com/v0/${param.value}.json`);
+    storiesID = splitArray(storieIDs.data);
     fetchStories();
-
-    let newStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/newstories.json");
-    storiesID.new = splitArray(newStorieIDs.data);
-
-    let bestStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/beststories.json");
-    storiesID.best = splitArray(bestStorieIDs.data);
-
-    let showStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/showstories.json");
-    storiesID.show = splitArray(showStorieIDs.data);
-
-    let askStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/askstories.json");
-    storiesID.ask = splitArray(askStorieIDs.data);
-
-    let jobStorieIDs = await axios.get("https://hacker-news.firebaseio.com/v0/jobstories.json");
-    storiesID.job = splitArray(jobStorieIDs.data);
-
 })
 
 // Split IDs into pages of 20 stories per page
@@ -56,9 +37,8 @@ function splitArray(arr) {
 
 // Fetch Stories
 async function fetchStories() {
-    const activeName = Object.keys(activeStory).find(key => activeStory[key] == true);
     news.value = [];
-    storiesID[`${activeName}`][page[`${activeName}`]].forEach(async (id) => {
+    storiesID[page].forEach(async (id) => {
         news.value.push(await fetchStory(id));
     })
 }
@@ -70,19 +50,15 @@ async function fetchStory(id) {
 
 // Backward page
 function backPage() {
-    const activeName = Object.keys(activeStory).find(key => activeStory[key] == true);
-    if (storiesID[`${activeName}`][page[`${activeName}`] - 1] == undefined) return;
-    page[`${activeName}`] = page[`${activeName}`] - 1;
-
+    if (storiesID[page - 1] == undefined) return;
+    page--;
     fetchStories();
 }
 
 // Forward page
 function nextPage() {
-    const activeName = Object.keys(activeStory).find(key => activeStory[key] == true);
-    if (storiesID[`${activeName}`][page[`${activeName}`] + 1] == undefined) return;
-    page[`${activeName}`] = page[`${activeName}`] + 1;
-
+    if (storiesID[page + 1] == undefined) return;
+    page++;
     fetchStories();
 }
 
@@ -96,6 +72,8 @@ function resetStories() {
 function fetchTopStories() {
     resetStories();
     activeStory.top = true;
+
+    router.push({ path: '/topstories' });
     fetchStories();
 }
 
@@ -103,6 +81,8 @@ function fetchTopStories() {
 function fetchNewStories() {
     resetStories();
     activeStory.new = true;
+
+    router.push({ path: '/newstories' });
     fetchStories();
 }
 
@@ -110,6 +90,8 @@ function fetchNewStories() {
 function fetchBestStories() {
     resetStories();
     activeStory.best = true;
+
+    router.push({ path: '/beststories' });
     fetchStories();
 }
 
@@ -117,6 +99,8 @@ function fetchBestStories() {
 function fetchShowStories() {
     resetStories();
     activeStory.show = true;
+
+    router.push({ path: '/showstories' });
     fetchStories();
 }
 
@@ -124,6 +108,8 @@ function fetchShowStories() {
 function fetchAskStories() {
     resetStories();
     activeStory.ask = true;
+
+    router.push({ path: '/askstories' });
     fetchStories();
 }
 
@@ -131,10 +117,10 @@ function fetchAskStories() {
 function fetchJobStories() {
     resetStories();
     activeStory.job = true;
+
+    router.push({ path: '/jobstories' });
     fetchStories();
 }
-
-// Convert Unix time to real time
 
 
 </script>
