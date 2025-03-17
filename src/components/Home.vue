@@ -1,7 +1,7 @@
 <script setup>
-import { onMounted, ref, watch } from "vue"
+import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import axios from "axios"
+import axios from "axios";
 import Comment from "./Comment.vue";
 
 const route = useRoute();
@@ -13,27 +13,36 @@ const isComment = ref(false);
 
 let storiesID = [];
 let page = 0;
-let commentsID = [];
+let commentsID = ref(0);
 
 const activeStory = {
-    top: true, new: false, best: false, show: false, ask: false, job: false,
+    top: true,
+    new: false,
+    best: false,
+    show: false,
+    ask: false,
+    job: false,
 };
-
 
 // Fetch Storie's IDs once
 async function fetchData() {
     param.value = route.params.stories;
     // Conditional check for fetch stories
     if (param.value === "comments") return;
-    const storieIDs = await axios.get(`https://hacker-news.firebaseio.com/v0/${param.value}.json`);
+    const storieIDs = await axios.get(
+        `https://hacker-news.firebaseio.com/v0/${param.value}.json`
+    );
     storiesID = splitArray(storieIDs.data);
     isComment.value = false;
     fetchStories();
-
 }
-watch(() => route.fullPath, () => {
-    fetchData();
-}, { immediate: true });
+watch(
+    () => route.fullPath,
+    () => {
+        fetchData();
+    },
+    { immediate: true }
+);
 
 // Split IDs into pages of 20 stories per page
 function splitArray(arr) {
@@ -49,11 +58,13 @@ async function fetchStories() {
     news.value = [];
     storiesID[page].forEach(async (id) => {
         news.value.push(await fetchStory(id));
-    })
+    });
 }
 // Fetch inique story form ID
 async function fetchStory(id) {
-    const res = await axios.get(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+    const res = await axios.get(
+        `https://hacker-news.firebaseio.com/v0/item/${id}.json`
+    );
     return res.data;
 }
 
@@ -73,53 +84,46 @@ function nextPage() {
 
 // Fetch Top stories
 function fetchTopStories() {
-    router.push({ path: '/topstories' });
+    router.push({ path: "/topstories" });
 }
 
 // Fetch New stories
 function fetchNewStories() {
-    router.push({ path: '/newstories' });
+    router.push({ path: "/newstories" });
 }
 
 // Fetch Best stories
 function fetchBestStories() {
-    router.push({ path: '/beststories' });
+    router.push({ path: "/beststories" });
 }
 
 // Fetch Show stories
 function fetchShowStories() {
-    router.push({ path: '/showstories' });
+    router.push({ path: "/showstories" });
 }
 
 // Fetch Ask stories
 function fetchAskStories() {
-    router.push({ path: '/askstories' });
+    router.push({ path: "/askstories" });
 }
 
 // Fetch Job stories
 function fetchJobStories() {
-    router.push({ path: '/jobstories' });
+    router.push({ path: "/jobstories" });
 }
 
 // Show Comments
 function showComments(item) {
-    router.push({ path: '/comments' });
+    router.push({ path: "/comments" });
 
     news.value = [];
     news.value.push(item);
     isComment.value = true;
 
-    commentsID = news.value[0].kids;
+    commentsID.value = news.value[0].id;
 
-    // console.log(news.value[0].kids);
-
-    // news.value[0].kids.forEach(async (id) => {
-    //     const res = await axios.get(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
-    //     console.log(res);
-    // })
+    console.log(news.value[0].id);
 }
-
-
 </script>
 
 <template>
@@ -128,11 +132,21 @@ function showComments(item) {
             <p class="leftHeader" @click="fetchTopStories">Hacker News</p>
         </div>
         <div class="subNews">
-            <p @click="fetchNewStories" :class="{ underline: param === 'newstories' }">New</p>
-            <p @click="fetchBestStories" :class="{ underline: param === 'beststories' }">Best</p>
-            <p @click="fetchShowStories" :class="{ underline: param === 'showstories' }">Show</p>
-            <p @click="fetchAskStories" :class="{ underline: param === 'askstories' }">Ask</p>
-            <p @click="fetchJobStories" :class="{ underline: param === 'jobstories' }">Jobs</p>
+            <p @click="fetchNewStories" :class="{ underline: param === 'newstories' }">
+                New
+            </p>
+            <p @click="fetchBestStories" :class="{ underline: param === 'beststories' }">
+                Best
+            </p>
+            <p @click="fetchShowStories" :class="{ underline: param === 'showstories' }">
+                Show
+            </p>
+            <p @click="fetchAskStories" :class="{ underline: param === 'askstories' }">
+                Ask
+            </p>
+            <p @click="fetchJobStories" :class="{ underline: param === 'jobstories' }">
+                Jobs
+            </p>
         </div>
     </div>
     <div class="middle">
@@ -140,10 +154,10 @@ function showComments(item) {
             <div class="listItems">
                 <a class="title" :href="item.url" target="_blank">{{ item.title }}</a>
                 <div class="bottomSection">
-                    <p>{{ item.score }} voets | </p>
-                    <p>by {{ item.by }} | </p>
-                    <p v-if="item.descendants != undefined && item.descendants != 0" @click="showComments(item)">{{
-                        item.descendants }} comments |
+                    <p>{{ item.score }} voets |</p>
+                    <p>by {{ item.by }} |</p>
+                    <p v-if="item.descendants != undefined && item.descendants != 0" @click="showComments(item)">
+                        {{ item.descendants }} comments |
                     </p>
                     <p>{{ item.time }} times ago</p>
                 </div>
@@ -151,16 +165,14 @@ function showComments(item) {
         </div>
     </div>
 
-    <div class="middle" v-if="isComment" v-for="id in commentsID">
-        <Comment :id="id" />
+    <div class="middle">
+        <Comment v-if="isComment" :id="commentsID" />
     </div>
-
 
     <div class="footer" v-if="!isComment">
         <button @click="backPage">back</button>
         <button @click="nextPage">next</button>
     </div>
-
 </template>
 
 <style scoped>
@@ -188,7 +200,7 @@ function showComments(item) {
 
 .bottomSection {
     font-size: 70%;
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
 
     display: flex;
     align-items: center;
@@ -201,6 +213,13 @@ function showComments(item) {
 }
 
 .middle {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.middle2 {
+    width: 60%;
     display: flex;
     align-items: center;
     flex-direction: column;
