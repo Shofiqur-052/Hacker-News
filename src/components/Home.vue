@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue"
+import { onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios"
 
@@ -8,6 +8,7 @@ const router = useRouter();
 
 const news = ref([]);
 const param = ref("");
+const isComment = ref(false);
 
 let storiesID = [];
 let page = 0;
@@ -18,13 +19,19 @@ const activeStory = {
 
 
 // Fetch Storie's IDs once
-onMounted(async () => {
+async function fetchData() {
     param.value = route.params.stories;
-
+    // Conditional check for fetch stories
+    if (param.value === "comments") return;
     const storieIDs = await axios.get(`https://hacker-news.firebaseio.com/v0/${param.value}.json`);
     storiesID = splitArray(storieIDs.data);
+    isComment.value = false;
     fetchStories();
-})
+
+}
+watch(() => route.fullPath, () => {
+    fetchData();
+}, { immediate: true });
 
 // Split IDs into pages of 20 stories per page
 function splitArray(arr) {
@@ -62,64 +69,48 @@ function nextPage() {
     fetchStories();
 }
 
-// Reset Active story and Page number
-function resetStories() {
-    for (let key in page) page[key] = 0;
-    for (let key in activeStory) activeStory[key] = false;
-}
-
 // Fetch Top stories
 function fetchTopStories() {
-    resetStories();
-    activeStory.top = true;
-
     router.push({ path: '/topstories' });
-    fetchStories();
 }
 
 // Fetch New stories
 function fetchNewStories() {
-    resetStories();
-    activeStory.new = true;
-
     router.push({ path: '/newstories' });
-    fetchStories();
 }
 
 // Fetch Best stories
 function fetchBestStories() {
-    resetStories();
-    activeStory.best = true;
-
     router.push({ path: '/beststories' });
-    fetchStories();
 }
 
 // Fetch Show stories
 function fetchShowStories() {
-    resetStories();
-    activeStory.show = true;
-
     router.push({ path: '/showstories' });
-    fetchStories();
 }
 
 // Fetch Ask stories
 function fetchAskStories() {
-    resetStories();
-    activeStory.ask = true;
-
     router.push({ path: '/askstories' });
-    fetchStories();
 }
 
 // Fetch Job stories
 function fetchJobStories() {
-    resetStories();
-    activeStory.job = true;
-
     router.push({ path: '/jobstories' });
-    fetchStories();
+}
+
+// Show Comments
+function showComments(item) {
+    router.push({ path: '/comments' });
+
+    news.value = [];
+    news.value.push(item);
+    isComment.value = true;
+
+    item.kids.forEach(async (id) => {
+        const res = await axios.get(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+        console.log(res);
+    })
 }
 
 
@@ -131,11 +122,11 @@ function fetchJobStories() {
             <p class="leftHeader" @click="fetchTopStories">Hacker News</p>
         </div>
         <div class="subNews">
-            <p @click="fetchNewStories" :class="{ underline: activeStory.new }">New</p>
-            <p @click="fetchBestStories" :class="{ underline: activeStory.best }">Best</p>
-            <p @click="fetchShowStories" :class="{ underline: activeStory.show }">Show</p>
-            <p @click="fetchAskStories" :class="{ underline: activeStory.ask }">Ask</p>
-            <p @click="fetchJobStories" :class="{ underline: activeStory.job }">Jobs</p>
+            <p @click="fetchNewStories" :class="{ underline: param === 'newstories' }">New</p>
+            <p @click="fetchBestStories" :class="{ underline: param === 'beststories' }">Best</p>
+            <p @click="fetchShowStories" :class="{ underline: param === 'showstories' }">Show</p>
+            <p @click="fetchAskStories" :class="{ underline: param === 'askstories' }">Ask</p>
+            <p @click="fetchJobStories" :class="{ underline: param === 'jobstories' }">Jobs</p>
         </div>
     </div>
     <div class="middle">
@@ -145,15 +136,23 @@ function fetchJobStories() {
                 <div class="bottomSection">
                     <p>{{ item.score }} voets | </p>
                     <p>by {{ item.by }} | </p>
-                    <p v-if="item.descendants != 0">{{ item.descendants }} comments | </p>
+                    <p v-if="item.descendants != undefined && item.descendants != 0" @click="showComments(item)">{{
+                        item.descendants }} comments |
+                    </p>
                     <p>{{ item.time }} times ago</p>
                 </div>
             </div>
         </div>
-        <div class="footer">
-            <button @click="backPage">back</button>
-            <button @click="nextPage">next</button>
-        </div>
+    </div>
+
+    <div class="comments">
+
+    </div>
+
+
+    <div class="footer" v-if="!isComment">
+        <button @click="backPage">back</button>
+        <button @click="nextPage">next</button>
     </div>
 
 </template>
@@ -163,6 +162,12 @@ function fetchJobStories() {
     /* text-decoration: underline; */
     background-color: rgb(214, 147, 60);
     border-radius: 3px;
+}
+
+.footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
 }
 
 .footer button {
