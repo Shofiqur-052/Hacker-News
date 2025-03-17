@@ -1,61 +1,74 @@
 <script setup>
+import { onMounted, ref } from 'vue';
+import axios from "axios"
+
+
+const props = defineProps({
+    id: {
+        type: Number,
+        required: true,
+    },
+});
+
+const title = ref("Loading...");
+
+onMounted(async () => {
+    const res = await axios.get(`https://hacker-news.firebaseio.com/v0/item/${props.id}.json`);
+    title.value = res.data.text;
+});
+
 
 </script>
 
 <template>
-    <div class="header">
-        <div class="topNews">
-            <p class="leftHeader" @click="fetchTopStories">Hacker News</p>
-        </div>
-        <div class="subNews">
-            <p @click="fetchNewStories" :class="{ underline: activeStory.new }">New</p>
-            <p @click="fetchBestStories" :class="{ underline: activeStory.best }">Best</p>
-            <p @click="fetchShowStories" :class="{ underline: activeStory.show }">Show</p>
-            <p @click="fetchAskStories" :class="{ underline: activeStory.ask }">Ask</p>
-            <p @click="fetchJobStories" :class="{ underline: activeStory.job }">Jobs</p>
-        </div>
-        
-    </div>
+    <div class="commentList">
+        <div class="listItems">
+            <div class="bottomSection">
+                <p>by richard | </p>
+                <p>45 comments | </p>
+                <p>created 5 times ago</p>
+            </div><br>
 
+            <p>{{ title }}</p>
+
+            <br>
+            <div class="bottomSection">
+                <p>show comment</p>
+            </div>
+        </div>
+    </div>
 </template>
 
 <style scoped>
-.header {
+.listItems {
     display: flex;
+    flex-direction: column;
+    white-space: pre;
+}
+
+.bottomSection {
+    font-size: 70%;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+
+    display: flex;
+    align-items: center;
     flex-direction: row;
-    height: 50px;
 }
 
-.topNews {
-    height: 50px;
-    background-color: burlywood;
-    width: 50%;
+.commentList {
+    width: 60%;
+    background-color: rgb(184, 165, 137);
+    margin-bottom: 2px;
+    border-radius: 2px;
 
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
-.subNews {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    height: 50px;
-    background-color: burlywood;
-    width: 50%;
-    font-size: small;
+.commentList p,
+a {
     color: black;
-    cursor: pointer;
-}
-
-.subNews p {
-    padding: 1px 12px;
-}
-
-.leftHeader {
-    color: black;
-    font-weight: bold;
-    cursor: pointer;
+    margin-left: 16px;
 }
 </style>

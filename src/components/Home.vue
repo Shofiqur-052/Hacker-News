@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios"
+import Comment from "./Comment.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -12,6 +13,7 @@ const isComment = ref(false);
 
 let storiesID = [];
 let page = 0;
+let commentsID = [];
 
 const activeStory = {
     top: true, new: false, best: false, show: false, ask: false, job: false,
@@ -107,10 +109,14 @@ function showComments(item) {
     news.value.push(item);
     isComment.value = true;
 
-    item.kids.forEach(async (id) => {
-        const res = await axios.get(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
-        console.log(res);
-    })
+    commentsID = news.value[0].kids;
+
+    // console.log(news.value[0].kids);
+
+    // news.value[0].kids.forEach(async (id) => {
+    //     const res = await axios.get(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+    //     console.log(res);
+    // })
 }
 
 
@@ -145,8 +151,8 @@ function showComments(item) {
         </div>
     </div>
 
-    <div class="comments">
-
+    <div class="middle" v-if="isComment" v-for="id in commentsID">
+        <Comment :id="id" />
     </div>
 
 
