@@ -3,32 +3,36 @@ import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import Comment from "./Comment.vue";
+import { calculateTime } from "@/components/Utils/UnixTime"
 
 const route = useRoute();
 const router = useRouter();
 
 const news = ref([]);
 const param = ref("");
+const paramID = ref(0);
 const isComment = ref(false);
 
 let storiesID = [];
 let page = 0;
 let commentsID = ref(0);
 
-const activeStory = {
-    top: true,
-    new: false,
-    best: false,
-    show: false,
-    ask: false,
-    job: false,
-};
-
 // Fetch Storie's IDs once
 async function fetchData() {
     param.value = route.params.stories;
-    // Conditional check for fetch stories
-    if (param.value === "comments") return;
+    paramID.value = route.params.id;
+    page = 0;
+
+    if (paramID.value === undefined && param.value === undefined) { return; }
+    if (paramID.value !== undefined) {
+        if (paramID.value != commentsID.value) { return; }
+        showComments(news.value[0]);
+        return;
+    }
+    if (!checkCorrectStory()) {
+        router.push({ name: 'Error', params: { catchAll: param.value } });
+        return;
+    }
     const storieIDs = await axios.get(
         `https://hacker-news.firebaseio.com/v0/${param.value}.json`
     );
@@ -43,6 +47,17 @@ watch(
     },
     { immediate: true }
 );
+
+// Check correct story param
+function checkCorrectStory() {
+    if (param.value === "topstories") return true;
+    if (param.value === "newstories") return true;
+    if (param.value === "beststories") return true;
+    if (param.value === "showstories") return true;
+    if (param.value === "askstories") return true;
+    if (param.value === "jobstories") return true;
+    return false;
+}
 
 // Split IDs into pages of 20 stories per page
 function splitArray(arr) {
@@ -65,6 +80,7 @@ async function fetchStory(id) {
     const res = await axios.get(
         `https://hacker-news.firebaseio.com/v0/item/${id}.json`
     );
+    res.data.time = calculateTime(res.data.time);
     return res.data;
 }
 
@@ -114,39 +130,26 @@ function fetchJobStories() {
 
 // Show Comments
 function showComments(item) {
-    router.push({ path: "/comments" });
-
+    router.push({ path: `/comments/${item.id}` });
     news.value = [];
     news.value.push(item);
+
     isComment.value = true;
-
     commentsID.value = news.value[0].id;
-
-    console.log(news.value[0].id);
 }
-</script>
 
+</script>
 <template>
     <div class="header">
         <div class="topNews">
             <p class="leftHeader" @click="fetchTopStories">Hacker News</p>
         </div>
         <div class="subNews">
-            <p @click="fetchNewStories" :class="{ underline: param === 'newstories' }">
-                New
-            </p>
-            <p @click="fetchBestStories" :class="{ underline: param === 'beststories' }">
-                Best
-            </p>
-            <p @click="fetchShowStories" :class="{ underline: param === 'showstories' }">
-                Show
-            </p>
-            <p @click="fetchAskStories" :class="{ underline: param === 'askstories' }">
-                Ask
-            </p>
-            <p @click="fetchJobStories" :class="{ underline: param === 'jobstories' }">
-                Jobs
-            </p>
+            <p @click="fetchNewStories" :class="{ underline: param === 'newstories' }">New</p>
+            <p @click="fetchBestStories" :class="{ underline: param === 'beststories' }">Best</p>
+            <p @click="fetchShowStories" :class="{ underline: param === 'showstories' }">Show</p>
+            <p @click="fetchAskStories" :class="{ underline: param === 'askstories' }">Ask</p>
+            <p @click="fetchJobStories" :class="{ underline: param === 'jobstories' }">Jobs</p>
         </div>
     </div>
     <div class="middle">
@@ -154,12 +157,13 @@ function showComments(item) {
             <div class="listItems">
                 <a class="title" :href="item.url" target="_blank">{{ item.title }}</a>
                 <div class="bottomSection">
-                    <p>{{ item.score }} voets |</p>
-                    <p>by {{ item.by }} |</p>
-                    <p v-if="item.descendants != undefined && item.descendants != 0" @click="showComments(item)">
-                        {{ item.descendants }} comments |
+                    <p>{{ item.score }} voets &nbsp;&nbsp; |</p>
+                    <p>by {{ item.by }} &nbsp;&nbsp; |</p>
+                    <p v-if="item.descendants != undefined && item.descendants != 0" @click="showComments(item)"
+                        class="commentsTitle">
+                        {{ item.descendants }} comments &nbsp;&nbsp; |
                     </p>
-                    <p>{{ item.time }} times ago</p>
+                    <p>Created {{ item.time }} ago</p>
                 </div>
             </div>
         </div>
@@ -170,26 +174,41 @@ function showComments(item) {
     </div>
 
     <div class="footer" v-if="!isComment">
-        <button @click="backPage">back</button>
-        <button @click="nextPage">next</button>
+        <button @click="backPage">&laquo;</button>
+        <p>{{ page + 1 }} / {{ storiesID.length }}</p>
+        <button @click="nextPage">&raquo;</button>
     </div>
 </template>
 
 <style scoped>
+.commentsTitle:hover {
+    text-decoration: underline;
+}
+
 .underline {
-    /* text-decoration: underline; */
     background-color: rgb(214, 147, 60);
     border-radius: 3px;
 }
 
 .footer {
     display: flex;
+    align-items: center;
     flex-direction: row;
     justify-content: center;
+    font-size: small;
+    width: 100%;
+    background-color: burlywood;
 }
 
 .footer button {
     margin: 5px;
+    background-color: rgb(232, 156, 101);
+    border-radius: 4px;
+    width: 35px;
+}
+
+.footer p {
+    color: black;
 }
 
 .listItems {
@@ -210,6 +229,11 @@ function showComments(item) {
 .title {
     font-size: small;
     font-weight: bold;
+    text-decoration: none;
+}
+
+.title:hover {
+    text-decoration: underline;
 }
 
 .middle {
@@ -227,7 +251,7 @@ function showComments(item) {
 
 .list {
     width: 60%;
-    height: 50px;
+    height: 55px;
     background-color: rgb(184, 165, 137);
     margin-bottom: 2px;
     border-radius: 2px;
@@ -280,5 +304,9 @@ a {
     color: black;
     font-weight: bold;
     cursor: pointer;
+}
+
+.leftHeader:hover {
+    text-decoration: underline;
 }
 </style>

@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import axios from "axios";
+import { calculateTime } from "@/components/Utils/UnixTime"
 
 const props = defineProps({
     id: {
@@ -13,13 +14,10 @@ const comments = ref([]);
 const currentID = ref();
 
 onMounted(async () => {
-    console.log(props.id);
     const res = await axios.get(
         `https://hacker-news.firebaseio.com/v0/item/${props.id}.json`
     );
     currentID.value = res.data;
-
-    console.log(currentID.value.parent);
 
     if (res.data.kids != undefined) {
         res.data.kids.forEach(async (id) => {
@@ -27,29 +25,30 @@ onMounted(async () => {
                 `https://hacker-news.firebaseio.com/v0/item/${id}.json`
             );
             result.data.flag = false;
+            result.data.time = calculateTime(result.data.time);
             comments.value.push(result.data);
         });
     }
 });
 
-// const flag = ref(false);
 </script>
 
 <template>
     <div :class="currentID.parent === undefined ? 'commentListDynamic' : 'commentList'
         " v-for="item in comments" :key="item.id">
-        <div class="listItems">
+        <div class="listItems"><br>
             <div class="bottomSection">
-                <p>by {{ item.by }} |</p>
-                <p v-if="item.kids != undefined">{{ item.kids.length }} comments |</p>
-                <p>created {{ item.time }} times ago</p>
+                <p>by {{ item.by }} &nbsp;&nbsp; |</p>
+                <p v-if="item.kids != undefined">{{ item.kids.length }} comments &nbsp;&nbsp; |</p>
+                <p>created {{ item.time }} ago</p>
             </div>
             <br />
 
-            <span v-html="item.text"></span><br />
+            <span v-html="item.text" class="text-span"></span><br />
 
-            <div class="bottomSection" @click="item.flag = !item.flag">
-                <p>show comment</p>
+            <div class="bottomSection" @click="item.flag = !item.flag" v-if="item.kids != undefined">
+                <p v-if="!item.flag">show comment [+{{ item.kids.length }}]</p>
+                <p v-if="item.flag">Hide comment [-]</p>
             </div>
             <br />
             <Comment v-if="item.flag" :id="item.id" />
@@ -58,6 +57,11 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.text-span {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-size: 90%;
+}
+
 .listItems {
     display: flex;
     flex-direction: column;
@@ -72,12 +76,16 @@ onMounted(async () => {
     flex-direction: row;
 }
 
+.bottomSection p {
+    font-weight: bold;
+}
+
 .commentListDynamic {
     width: 60%;
     background-color: rgb(184, 165, 137);
     margin-bottom: 2px;
     border-radius: 2px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
 
     display: flex;
     align-items: center;
@@ -85,12 +93,12 @@ onMounted(async () => {
 }
 
 .commentList {
-    width: 96%;
+    width: 97%;
     background-color: rgb(184, 165, 137);
     margin-bottom: 2px;
-    margin-left: 20px;
+    margin-left: 15px;
     border-radius: 2px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
 
     display: flex;
     align-items: center;
