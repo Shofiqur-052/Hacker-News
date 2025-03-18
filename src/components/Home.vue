@@ -38,6 +38,7 @@ async function fetchData() {
     );
     storiesID = splitArray(storieIDs.data);
     isComment.value = false;
+    setLoading();
     fetchStories();
 }
 watch(
@@ -47,6 +48,19 @@ watch(
     },
     { immediate: true }
 );
+
+// Set Default Loading values
+function setLoading() {
+    news.value = [];
+    for (let i = 0; i < storiesID[page].length; i++) {
+        news.value.push({
+            title: "Loading...",
+            score: "Loading...",
+            by: "Loading...",
+            time: "Loading..."
+        });
+    }
+}
 
 // Check correct story param
 function checkCorrectStory() {
@@ -70,9 +84,8 @@ function splitArray(arr) {
 
 // Fetch Stories
 async function fetchStories() {
-    news.value = [];
-    storiesID[page].forEach(async (id) => {
-        news.value.push(await fetchStory(id));
+    storiesID[page].forEach(async (id, index) => {
+        news.value.splice(index, 1, await fetchStory(id));
     });
 }
 // Fetch inique story form ID
@@ -88,6 +101,7 @@ async function fetchStory(id) {
 function backPage() {
     if (storiesID[page - 1] == undefined) return;
     page--;
+    setLoading();
     fetchStories();
 }
 
@@ -95,6 +109,7 @@ function backPage() {
 function nextPage() {
     if (storiesID[page + 1] == undefined) return;
     page++;
+    setLoading();
     fetchStories();
 }
 

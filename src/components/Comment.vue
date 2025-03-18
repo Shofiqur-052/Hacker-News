@@ -14,18 +14,24 @@ const comments = ref([]);
 const currentID = ref();
 
 onMounted(async () => {
+    comments.value.push({
+        by: "Loading...",
+        time: "Loading...",
+        text: "Loading..."
+    });
     const res = await axios.get(
         `https://hacker-news.firebaseio.com/v0/item/${props.id}.json`
     );
     currentID.value = res.data;
 
     if (res.data.kids != undefined) {
-        res.data.kids.forEach(async (id) => {
+        res.data.kids.forEach(async (id, index) => {
             const result = await axios.get(
                 `https://hacker-news.firebaseio.com/v0/item/${id}.json`
             );
             result.data.flag = false;
             result.data.time = calculateTime(result.data.time);
+            if (index == 0) comments.value = [];
             comments.value.push(result.data);
         });
     }
@@ -110,6 +116,7 @@ span,
 a {
     color: black;
     margin-left: 16px;
+    margin-right: 10px;
 }
 
 .commentListDynamic p,
@@ -117,6 +124,7 @@ span,
 a {
     color: black;
     margin-left: 16px;
+    margin-right: 10px;
 }
 
 .commentList,
