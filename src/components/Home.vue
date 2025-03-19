@@ -24,9 +24,9 @@ async function fetchData() {
     page = 0;
 
     if (paramID.value === undefined && param.value === undefined) { return; }
-    if (paramID.value !== undefined) {
-        if (paramID.value != commentsID.value) { return; }
-        showComments(news.value[0]);
+    if (paramID.value != undefined) {
+        const item = await fetchStory(paramID.value);
+        if (item !== null) showComments(item);
         return;
     }
     if (!checkCorrectStory()) {
@@ -91,11 +91,16 @@ async function fetchStories() {
 }
 // Fetch inique story form ID
 async function fetchStory(id) {
-    const res = await axios.get(
-        `https://hacker-news.firebaseio.com/v0/item/${id}.json`
-    );
-    res.data.time = calculateTime(res.data.time);
-    return res.data;
+    try {
+        const res = await axios.get(
+            `https://hacker-news.firebaseio.com/v0/item/${id}.json`
+        );
+        res.data.time = calculateTime(res.data.time);
+        return res.data;
+    } catch (error) {
+        router.push({ name: 'Error', params: { catchAll: param.value } });
+        return null;
+    }
 }
 
 // Backward page
