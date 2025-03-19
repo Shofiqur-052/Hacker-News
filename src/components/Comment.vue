@@ -4,34 +4,30 @@ import axios from "axios";
 import { calculateTime } from "@/components/Utils/UnixTime"
 
 const props = defineProps({
-    id: {
-        type: Number,
+    ids: {
+        type: Array,
         required: true,
     },
+    count: {
+        type: Number,
+        required: true,
+    }
 });
 
 const comments = ref([]);
-const currentID = ref();
 
 onMounted(async () => {
+    setLoading(props.ids.length);
 
-    const res = await axios.get(
-        `https://hacker-news.firebaseio.com/v0/item/${props.id}.json`
-    );
-    currentID.value = res.data;
-
-    if (res.data.kids != undefined) {
-        setLoading(res.data.kids.length);
-
-        res.data.kids.forEach(async (id, index) => {
-            const result = await axios.get(
-                `https://hacker-news.firebaseio.com/v0/item/${id}.json`
-            );
-            result.data.flag = false;
-            result.data.time = calculateTime(result.data.time);
-            comments.value.splice(index, 1, result.data);
-        });
-    }
+    props.ids.forEach(async (id, index) => {
+        const result = await axios.get(
+            `https://hacker-news.firebaseio.com/v0/item/${id}.json`
+        );
+        result.data.flag = false;
+        result.data.time = calculateTime(result.data.time);
+        comments.value.splice(index, 1, result.data);
+    });
+    // }
 });
 
 // Set Default Loading values
@@ -50,7 +46,7 @@ function setLoading(len) {
 </script>
 
 <template>
-    <div :class="currentID.parent === undefined ? 'commentListDynamic' : 'commentList'
+    <div :class="props.count === 0 ? 'commentListDynamic' : 'commentList'
         " v-for="item in comments" :key="item.id">
         <div class="listItems"><br>
             <div class="bottomSection">
@@ -67,7 +63,7 @@ function setLoading(len) {
                 <p v-if="item.flag">Hide comment [-]</p>
             </div>
             <br />
-            <Comment v-if="item.flag" :id="item.id" />
+            <Comment v-if="item.flag" :ids="item.kids" :count="props.count + 1" />
         </div>
     </div>
 </template>

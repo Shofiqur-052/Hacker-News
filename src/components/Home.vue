@@ -15,7 +15,7 @@ const isComment = ref(false);
 
 let storiesID = [];
 let page = 0;
-let commentsID = ref(0);
+let commentsID = ref([]);
 
 // Fetch Storie's IDs once
 async function fetchData() {
@@ -151,7 +151,7 @@ function showComments(item) {
     news.value.push(item);
 
     isComment.value = true;
-    commentsID.value = news.value[0].id;
+    commentsID.value = news.value[0].kids;
 }
 
 </script>
@@ -186,7 +186,7 @@ function showComments(item) {
     </div>
 
     <div class="middle">
-        <Comment v-if="isComment" :id="commentsID" />
+        <Comment v-if="isComment" :ids="commentsID" :count="0" />
     </div>
 
     <div class="footer" v-if="!isComment">
