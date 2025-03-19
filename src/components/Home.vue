@@ -57,7 +57,8 @@ function setLoading() {
             title: "Loading...",
             score: "Loading...",
             by: "Loading...",
-            time: "Loading..."
+            time: "Loading...",
+            id: i,
         });
     }
 }
