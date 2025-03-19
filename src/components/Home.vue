@@ -141,7 +141,7 @@ function showComments(item) {
             <div class="listItems">
                 <a class="title" :href="item.url" target="_blank">{{ item.title }}</a>
                 <div class="bottomSection">
-                    <p>{{ item.score }} voets &nbsp;&nbsp; |</p>
+                    <p>{{ item.score }} votes &nbsp;&nbsp; |</p>
                     <p>by {{ item.by }} &nbsp;&nbsp; |</p>
                     <p v-if="item.descendants != undefined && item.descendants != 0" @click="showComments(item)"
                         class="commentsTitle">
