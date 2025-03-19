@@ -27,7 +27,6 @@ onMounted(async () => {
         result.data.time = calculateTime(result.data.time);
         comments.value.splice(index, 1, result.data);
     });
-    // }
 });
 
 // Set Default Loading values
@@ -105,10 +104,10 @@ function setLoading(len) {
 }
 
 .commentList {
-    width: 97.5%;
+    width: 98%;
     background-color: rgb(184, 165, 137);
     margin-bottom: 2px;
-    margin-left: 15px;
+    margin-left: 20px;
     border-radius: 2px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
 

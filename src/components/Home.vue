@@ -42,36 +42,32 @@ async function fetchData() {
     fetchStories();
 }
 watch(
-    () => route.fullPath,
-    () => {
+    () => route.fullPath, () => {
         fetchData();
-    },
-    { immediate: true }
+    }, { immediate: true }
 );
 
 // Set Default Loading values
 function setLoading() {
     news.value = [];
-    for (let i = 0; i < storiesID[page].length; i++) {
+    for (let index = 0; index < storiesID[page].length; index++) {
         news.value.push({
+            id: index,
             title: "Loading...",
             score: "Loading...",
             by: "Loading...",
             time: "Loading...",
-            id: i,
         });
     }
 }
 
 // Check correct story param
 function checkCorrectStory() {
-    if (param.value === "topstories") return true;
-    if (param.value === "newstories") return true;
-    if (param.value === "beststories") return true;
-    if (param.value === "showstories") return true;
-    if (param.value === "askstories") return true;
-    if (param.value === "jobstories") return true;
-    return false;
+    const item = ['top', 'new', 'best', 'show', 'ask', 'job'];
+    const ans = item.some((name) => {
+        return param.value === `${name}stories`;
+    });
+    return ans;
 }
 
 // Split IDs into pages of 20 stories per page
@@ -103,50 +99,17 @@ async function fetchStory(id) {
     }
 }
 
-// Backward page
-function backPage() {
-    if (storiesID[page - 1] == undefined) return;
-    page--;
+// Forward or Backward page
+function switchPage(amount) {
+    if (storiesID[page + amount] == undefined) return;
+    page += amount;
     setLoading();
     fetchStories();
 }
 
-// Forward page
-function nextPage() {
-    if (storiesID[page + 1] == undefined) return;
-    page++;
-    setLoading();
-    fetchStories();
-}
-
-// Fetch Top stories
-function fetchTopStories() {
-    router.push({ path: "/topstories" });
-}
-
-// Fetch New stories
-function fetchNewStories() {
-    router.push({ path: "/newstories" });
-}
-
-// Fetch Best stories
-function fetchBestStories() {
-    router.push({ path: "/beststories" });
-}
-
-// Fetch Show stories
-function fetchShowStories() {
-    router.push({ path: "/showstories" });
-}
-
-// Fetch Ask stories
-function fetchAskStories() {
-    router.push({ path: "/askstories" });
-}
-
-// Fetch Job stories
-function fetchJobStories() {
-    router.push({ path: "/jobstories" });
+// Fetch stories
+function navigateStories(name) {
+    router.push({ path: `/${name}stories` });
 }
 
 // Show Comments
@@ -163,14 +126,14 @@ function showComments(item) {
 <template>
     <div class="header">
         <div class="topNews">
-            <p class="leftHeader" @click="fetchTopStories">Hacker News</p>
+            <p class="leftHeader" @click="navigateStories('top')">Hacker News</p>
         </div>
         <div class="subNews">
-            <p @click="fetchNewStories" :class="{ underline: param === 'newstories' }">New</p>
-            <p @click="fetchBestStories" :class="{ underline: param === 'beststories' }">Best</p>
-            <p @click="fetchShowStories" :class="{ underline: param === 'showstories' }">Show</p>
-            <p @click="fetchAskStories" :class="{ underline: param === 'askstories' }">Ask</p>
-            <p @click="fetchJobStories" :class="{ underline: param === 'jobstories' }">Jobs</p>
+            <p @click="navigateStories('new')" :class="{ underline: param === 'newstories' }">New</p>
+            <p @click="navigateStories('best')" :class="{ underline: param === 'beststories' }">Best</p>
+            <p @click="navigateStories('show')" :class="{ underline: param === 'showstories' }">Show</p>
+            <p @click="navigateStories('ask')" :class="{ underline: param === 'askstories' }">Ask</p>
+            <p @click="navigateStories('job')" :class="{ underline: param === 'jobstories' }">Jobs</p>
         </div>
     </div>
     <div class="middle">
@@ -195,9 +158,9 @@ function showComments(item) {
     </div>
 
     <div class="footer" v-if="!isComment">
-        <button @click="backPage">&laquo;</button>
+        <button @click="switchPage(-1)">&laquo;</button>
         <p>{{ page + 1 }} / {{ storiesID.length }}</p>
-        <button @click="nextPage">&raquo;</button>
+        <button @click="switchPage(+1)">&raquo;</button>
     </div>
 </template>
 
@@ -207,7 +170,7 @@ function showComments(item) {
 }
 
 .underline {
-    background-color: rgb(214, 147, 60);
+    background-color: rgb(232, 156, 101);
     border-radius: 3px;
 }
 

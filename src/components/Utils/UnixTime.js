@@ -1,4 +1,6 @@
 
+// Calculate Real time difference from Unix time
+
 export function calculateTime(unixTime) {
     const seconds = Math.floor((new Date() - new Date(unixTime * 1000)) / 1000);
     let timeAgo = "0";
