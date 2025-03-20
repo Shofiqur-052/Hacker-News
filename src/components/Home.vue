@@ -14,13 +14,29 @@ const news = ref([]);
 const param = ref("");
 const paramID = ref(0);
 const isComment = ref(false);
+const areAllFetched = ref(false);
 
 let storiesID = [];
 let page = 0;
 let commentsID = ref([]);
 
-console.log(store.getters.getTop(52).name);
-
+// Fetch ALL ids from api call
+onMounted(async () => {
+    try {
+        await Promise.all([
+            store.dispatch('fetchStory', "topstories"),
+            store.dispatch('fetchStory', "newstories"),
+            store.dispatch('fetchStory', "beststories"),
+            store.dispatch('fetchStory', "showstories"),
+            store.dispatch('fetchStory', "askstories"),
+            store.dispatch('fetchStory', "jobstories")
+        ]);
+        areAllFetched.value = true;
+        fetchData();
+    } catch (error) {
+        console.error('Error while fetching stories:', error);
+    }
+});
 
 // Fetch Storie's IDs once
 async function fetchData() {
@@ -38,17 +54,17 @@ async function fetchData() {
         router.push({ name: 'Error', params: { catchAll: param.value } });
         return;
     }
-    const storieIDs = await axios.get(
-        `https://hacker-news.firebaseio.com/v0/${param.value}.json`
-    );
-    storiesID = splitArray(storieIDs.data);
+    // let storyIDs = await axios.get(`https://hacker-news.firebaseio.com/v0/${param.value}.json`);
+    const storyIDs = store.getters.getStoryIDs(param.value);
+
+    storiesID = splitArray(storyIDs);
     isComment.value = false;
     setLoading();
     fetchStories();
 }
 watch(
     () => route.fullPath, () => {
-        fetchData();
+        if (areAllFetched.value) fetchData();
     }, { immediate: true }
 );
 
