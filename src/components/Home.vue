@@ -3,10 +3,12 @@ import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import Comment from "./Comment.vue";
+import { useStore } from "vuex";
 import { calculateTime } from "@/utils/unixTime"
 
 const route = useRoute();
 const router = useRouter();
+const store = useStore();
 
 const news = ref([]);
 const param = ref("");
@@ -16,6 +18,9 @@ const isComment = ref(false);
 let storiesID = [];
 let page = 0;
 let commentsID = ref([]);
+
+console.log(store.getters.getTop(52).name);
+
 
 // Fetch Storie's IDs once
 async function fetchData() {
