@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import axios from "axios";
-import { calculateTime } from "@/components/Utils/UnixTime"
+import { calculateTime } from "@/utils/unixTime"
 
 const props = defineProps({
     ids: {

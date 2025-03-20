@@ -3,7 +3,7 @@ import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import Comment from "./Comment.vue";
-import { calculateTime } from "@/components/Utils/UnixTime"
+import { calculateTime } from "@/utils/unixTime"
 
 const route = useRoute();
 const router = useRouter();
