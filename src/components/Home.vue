@@ -54,7 +54,6 @@ async function fetchData() {
         router.push({ name: 'Error', params: { catchAll: param.value } });
         return;
     }
-    // let storyIDs = await axios.get(`https://hacker-news.firebaseio.com/v0/${param.value}.json`);
     const storyIDs = store.getters.getStoryIDs(param.value);
 
     storiesID = splitArray(storyIDs);
@@ -84,8 +83,8 @@ function setLoading() {
 
 // Check correct story param
 function checkCorrectStory() {
-    const item = ['top', 'new', 'best', 'show', 'ask', 'job'];
-    const ans = item.some((name) => {
+    const types = ['top', 'new', 'best', 'show', 'ask', 'job'];
+    const ans = types.some((name) => {
         return param.value === `${name}stories`;
     });
     return ans;
@@ -111,25 +110,8 @@ async function fetchStory(id) {
 
     if (store.getters.getStory(id, param.value).id === undefined) {
         await store.dispatch('fetchStory', { section: param.value, id: id });
-        // return store.getters.getStory(id, param.value);    // TODO:- Line optimization
     }
-    // else {
-    //     // return store.getters.getStory(id, param.value);
-    // }
-
     return store.getters.getStory(id, param.value);
-
-
-    try {
-        const res = await axios.get(
-            `https://hacker-news.firebaseio.com/v0/item/${id}.json`
-        );
-        res.data.time = calculateTime(res.data.time);
-        return res.data;
-    } catch (error) {
-        router.push({ name: 'Error', params: { catchAll: param.value } });
-        return null;
-    }
 }
 
 // Forward or Backward page

@@ -2,6 +2,10 @@
 import { onMounted, ref } from "vue";
 import axios from "axios";
 import { calculateTime } from "@/utils/unixTime"
+import { useStore } from "vuex";
+
+const comments = ref([]);
+const store = useStore();
 
 const props = defineProps({
     ids: {
@@ -14,18 +18,15 @@ const props = defineProps({
     }
 });
 
-const comments = ref([]);
-
 onMounted(async () => {
     setLoading(props.ids.length);
 
     props.ids.forEach(async (id, index) => {
-        const result = await axios.get(
-            `https://hacker-news.firebaseio.com/v0/item/${id}.json`
-        );
-        result.data.flag = false;
-        result.data.time = calculateTime(result.data.time);
-        comments.value.splice(index, 1, result.data);
+        if (store.getters.getComment(id) === undefined) {
+            await store.dispatch('fetchComment', id);
+        }
+        const res = store.getters.getComment(id);
+        comments.value.splice(index, 1, res);
     });
 });
 
