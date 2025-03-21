@@ -24,12 +24,12 @@ let commentsID = ref([]);
 onMounted(async () => {
     try {
         await Promise.all([
-            store.dispatch('fetchStory', "topstories"),
-            store.dispatch('fetchStory', "newstories"),
-            store.dispatch('fetchStory', "beststories"),
-            store.dispatch('fetchStory', "showstories"),
-            store.dispatch('fetchStory', "askstories"),
-            store.dispatch('fetchStory', "jobstories")
+            store.dispatch('fetchStories', "topstories"),
+            store.dispatch('fetchStories', "newstories"),
+            store.dispatch('fetchStories', "beststories"),
+            store.dispatch('fetchStories', "showstories"),
+            store.dispatch('fetchStories', "askstories"),
+            store.dispatch('fetchStories', "jobstories")
         ]);
         areAllFetched.value = true;
         fetchData();
@@ -108,6 +108,18 @@ async function fetchStories() {
 }
 // Fetch inique story form ID
 async function fetchStory(id) {
+
+    if (store.getters.getStory(id, param.value).id === undefined) {
+        await store.dispatch('fetchStory', { section: param.value, id: id });
+        // return store.getters.getStory(id, param.value);    // TODO:- Line optimization
+    }
+    // else {
+    //     // return store.getters.getStory(id, param.value);
+    // }
+
+    return store.getters.getStory(id, param.value);
+
+
     try {
         const res = await axios.get(
             `https://hacker-news.firebaseio.com/v0/item/${id}.json`
